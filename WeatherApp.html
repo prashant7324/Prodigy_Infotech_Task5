@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .weather-container {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      width: 320px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #0099ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #005fbb;
+    }
+
+    .weather-icon {
+      width: 100px;
+      height: 100px;
+    }
+
+    #weatherDisplay p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-container">
+    <h1>🌤️ Weather App</h1>
+    <input type="text" id="locationInput" placeholder="Enter city name" />
+    <div>
+      <button onclick="getWeather()">Get Weather</button>
+      <button onclick="getWeatherByLocation()">📍 Use My Location</button>
+    </div>
+    <div id="weatherDisplay" style="margin-top: 20px;"></div>
+  </div>
+
+  <script>
+    const apiKey = 'a1d7e6fecc52a455dae666b9406fb305';
+
+    function getWeather() {
+      const location = document.getElementById('locationInput').value.trim();
+      const display = document.getElementById('weatherDisplay');
+
+      if (!location) {
+        display.innerHTML = `<p style="color: #ffcccc;">❗ Please enter a city name.</p>`;
+        return;
+      }
+
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`)
+        .then(response => {
+          if (!response.ok) throw new Error('City not found');
+          return response.json();
+        })
+        .then(showWeather)
+        .catch(() => {
+          display.innerHTML = `<p style="color: #ffcccc;">❌ City not found or API error. Try again.</p>`;
+        });
+    }
+
+    function getWeatherByLocation() {
+      const display = document.getElementById('weatherDisplay');
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported by your browser.');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+            .then(response => {
+              if (!response.ok) throw new Error('Location error');
+              return response.json();
+            })
+            .then(showWeather)
+            .catch(() => {
+              display.innerHTML = `<p style="color: #ffcccc;">❌ Couldn't get your location's weather.</p>`;
+            });
+        },
+        () => {
+          alert('Permission denied or location unavailable.');
+        }
+      );
+    }
+
+    function showWeather(data) {
+      const display = document.getElementById('weatherDisplay');
+      display.innerHTML = `
+        <h2>${data.name}, ${data.sys.country}</h2>
+        <img class="weather-icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Icon">
+        <p><strong>${data.weather[0].main}</strong>: ${data.weather[0].description}</p>
+        <p>🌡️ Temp: ${data.main.temp}°C</p>
+        <p>💧 Humidity: ${data.main.humidity}%</p>
+        <p>💨 Wind: ${data.wind.speed} m/s</p>
+      `;
+    }
+  </script>
+</body>
+</html>
